@@ -1,6 +1,8 @@
 package com.tomlutzenberger.jdirstat_cli;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class PathAnalyzer implements Runnable {
@@ -8,6 +10,7 @@ public class PathAnalyzer implements Runnable {
 	private static int fileCount = 0;
 	private static int dirCount = 0;
 	private static long totalSize = 0;
+	private static Map<String,Integer> extensions = new HashMap<>();
 	private File path;
 
 
@@ -31,6 +34,10 @@ public class PathAnalyzer implements Runnable {
 			CliLoader.progress();
 
 			if (childFile.isFile()) {
+				String fileExt = this.getFileExtension(childFile);
+
+				this.addExtension(fileExt);
+
 				fileCount++;
 				totalSize += childFile.length();
 			} else if (childFile.isDirectory()) {
@@ -47,11 +54,42 @@ public class PathAnalyzer implements Runnable {
 		}
 	}
 
+
 	public static void getStats() {
+
 		System.out.print("\n\n");
 		System.out.println("Overview:");
-		System.out.printf("  %d Files, %s\n", fileCount, ByteFormatter.getAuto(totalSize, true));
+		System.out.printf("  %s\n", ByteFormatter.getAuto(totalSize, true));
+		System.out.printf("  %d Files\n", fileCount);
 		System.out.printf("  %d Directories\n", dirCount);
+
+		System.out.print("\n");
+		System.out.println("Extensions:");
+
+		for (String ext : extensions.keySet()) {
+			int count = extensions.get(ext);
+			double percentage = ((double)count / (double)fileCount) * 100;
+			System.out.printf("  %s: %d (%.2f%%)\n", ext, count, percentage);
+		}
+	}
+
+
+	private String getFileExtension(File file) {
+
+		String fileName = file.getName().toLowerCase();
+
+		if(fileName.lastIndexOf(".") != -1 && fileName.lastIndexOf(".") != 0) {
+			return fileName.substring(fileName.lastIndexOf(".") + 1);
+		}
+
+		return "";
+	}
+
+
+	private void addExtension(String ext) {
+
+		int extCount = extensions.containsKey(ext) ? extensions.get(ext) : 1;
+		extensions.put(ext, extCount + 1);
 	}
 
 }
