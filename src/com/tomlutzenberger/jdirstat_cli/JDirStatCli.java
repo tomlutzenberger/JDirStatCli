@@ -16,8 +16,14 @@ public class JDirStatCli {
 		File f = new File(path);
 
 		if (f.exists() && f.isAbsolute()) {
-			PathAnalyzer pa = new PathAnalyzer(f);
-			pa.analyze();
+			Thread pa = new Thread(new PathAnalyzer(f));
+			pa.start();
+			try {
+				pa.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			PathAnalyzer.getStats();
 		} else {
 			System.err.printf("Path `%s` is not valid, not absolute or does not exist.\n", path);
 		}
