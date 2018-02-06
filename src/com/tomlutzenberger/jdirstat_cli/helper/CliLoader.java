@@ -1,4 +1,4 @@
-package com.tomlutzenberger.jdirstat_cli;
+package com.tomlutzenberger.jdirstat_cli.helper;
 
 
 public class CliLoader {

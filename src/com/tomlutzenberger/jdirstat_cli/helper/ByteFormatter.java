@@ -1,7 +1,4 @@
-package com.tomlutzenberger.jdirstat_cli;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
+package com.tomlutzenberger.jdirstat_cli.helper;
 
 
 public class ByteFormatter {
