@@ -1,5 +1,8 @@
 package com.tomlutzenberger.jdirstat_cli;
 
+import com.tomlutzenberger.jdirstat_cli.helper.ByteFormatter;
+import com.tomlutzenberger.jdirstat_cli.helper.CliLoader;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,14 +60,12 @@ public class PathAnalyzer implements Runnable {
 
 	public static void getStats() {
 
-		System.out.print("\n\n");
-		System.out.println("Overview:");
+		System.out.print("\n\nOverview:\n");
 		System.out.printf("  %s\n", ByteFormatter.getAuto(totalSize, true));
 		System.out.printf("  %d Files\n", fileCount);
 		System.out.printf("  %d Directories\n", dirCount);
 
-		System.out.print("\n");
-		System.out.println("Extensions:");
+		System.out.print("\nExtensions:");
 
 		for (String ext : extensions.keySet()) {
 			int count = extensions.get(ext);
@@ -88,7 +89,7 @@ public class PathAnalyzer implements Runnable {
 
 	private void addExtension(String ext) {
 
-		int extCount = extensions.containsKey(ext) ? extensions.get(ext) : 1;
+		int extCount = extensions.getOrDefault(ext, 1);
 		extensions.put(ext, extCount + 1);
 	}
 
