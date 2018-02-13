@@ -1,10 +1,10 @@
 package com.tomlutzenberger.jdirstat_cli;
 
 import com.tomlutzenberger.jdirstat_cli.helper.ByteFormatter;
-import com.tomlutzenberger.jdirstat_cli.helper.CliLoader;
 import com.tomlutzenberger.jdirstat_cli.helper.Counter;
 
 import java.io.File;
+import java.util.NoSuchElementException;
 
 
 public class PathAnalyzer implements Runnable {
@@ -12,65 +12,57 @@ public class PathAnalyzer implements Runnable {
 	private static Counter pathTypeCounter = new Counter();
 	private static Counter extensionCounter = new Counter();
 	private static long totalSize = 0;
-	private File path;
 
-
-	public PathAnalyzer(File f) {
-		this.path = f;
-	}
+	public static final Object lock = new Object();
 
 
 	public void run() {
 
-		String[] children = this.path.list();
+		while (!PathCollector.complete) {
 
-		if (children == null || children.length == 0) {
-			//Given path has no children
-			return;
-		}
+			if (PathCollector.hasNextChild()) {
+				try {
+					File childFile = new File(PathCollector.getNextChild());
+					analyzePath(childFile);
 
-		for (String child : children) {
-			File childFile = new File(this.path, child);
-
-			CliLoader.progress();
-
-			analyzePath(childFile);
+				} catch (NoSuchElementException e) {
+				}
+			}
 		}
 	}
 
 
-	public void analyzePath(File path) {
+	private void analyzePath(File path) {
 
 		String pathType;
 
 		if (path.isFile()) {
 			pathType = "files";
 			String fileExt = this.getFileExtension(path);
-			totalSize += path.length();
 
-			try {
-				extensionCounter.up(fileExt);
-			} catch (Exception e) {
-				e.printStackTrace();
+			synchronized (lock) {
+				totalSize += path.length();
+
+				try {
+					extensionCounter.up(fileExt);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 
 		} else if (path.isDirectory()) {
 			pathType = "directories";
 
-			Thread pa = new Thread(new PathAnalyzer(path));
-			pa.start();
-			try {
-				pa.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
 		} else {
 			pathType = "unknown";
 		}
 
+		PathCollector.removeChild(path.getAbsolutePath());
 
 		try {
-			pathTypeCounter.up(pathType);
+			synchronized (lock) {
+				pathTypeCounter.up(pathType);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -88,7 +80,7 @@ public class PathAnalyzer implements Runnable {
 			System.out.printf("  %d Files\n", pathTypeCounter.get("files"));
 			System.out.printf("  %d Directories\n", pathTypeCounter.get("directories"));
 
-			System.out.print("\nExtensions:");
+			System.out.print("\nExtensions:\n");
 
 			for (String ext : extensionCounter.getAll()) {
 				long extCount = extensionCounter.get(ext);
