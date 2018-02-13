@@ -13,25 +13,23 @@ public class Counter {
 	public Counter() {}
 
 
-	public void set(String key, long value) throws Exception {
+	public void set(String key, long value) {
 
-		if (value < 0) {
-			throw new Exception("Counter can\'t go below 0");
-		}
+		if (value < 0) value = 0;
 
 		counters.put(key, value);
 	}
 
 
-	public void set(String key, int value) throws Exception {
+	public void set(String key, int value) {
 		set(key, (long)value);
 	}
 
 
-	public long get(String key) throws Exception {
+	public long get(String key) {
 
 		if (!counters.containsKey(key)) {
-			throw new Exception(String.format("Counter `%s` does not exist", key));
+			return -1;
 		}
 
 		return counters.get(key);
@@ -51,7 +49,7 @@ public class Counter {
 
 	public long up(String key) throws Exception {
 
-		long count = counters.getOrDefault(key, 1L);
+		long count = counters.getOrDefault(key, 0L);
 
 		if (count == Long.MAX_VALUE) {
 			throw new Exception("Counter limit reached: " + count);
@@ -64,15 +62,14 @@ public class Counter {
 	}
 
 
-	public long down(String key) throws Exception {
+	public long down(String key) {
 
-		long count = counters.getOrDefault(key, 1L);
+		long count = counters.getOrDefault(key, 0L);
 
-		if (count == 0) {
-			throw new Exception("Counter can\'t go below 0");
+		if (count > 0) {
+			count--;
 		}
 
-		count--;
 		counters.put(key, count);
 
 		return count;
